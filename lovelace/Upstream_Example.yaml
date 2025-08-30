@@ -1,0 +1,19 @@
+type: custom:flex-table-card
+title: CM1200 Upstream Bonded Channels
+entities:
+  include: sensor.cm1200_cable_modem_cm1200_us_channel_*
+columns:
+  - data: channel
+    name: Channel
+  - data: lock_status
+    name: Lock Status
+  - data: us_channel_type
+    name: US Channel Type
+  - data: channel_id
+    name: Channel ID
+  - data: symbol_rate
+    name: Symbol Rate
+  - data: frequency
+    name: Frequency
+  - data: power
+    name: Power
