@@ -36,98 +36,61 @@ def mqtt_publish(client, topic, value, retain=True):
     client.publish(topic, value, retain=retain)
 
 def publish_discovery(mqttc, base_topic):
-    # Downstream bonded channels (all columns)
+    # Downstream bonded channels (one entity per channel, all columns as attributes)
     for i in range(DOWNSTREAM_CHANNELS):
-        for col, unit in [
-            ("lock_status", None),
-            ("modulation", None),
-            ("channel_id", None),
-            ("frequency", "Hz"),
-            ("power", "dBmV"),
-            ("snr", "dB"),
-            ("correctables", None),
-            ("uncorrectables", None)
-        ]:
-            mqttc.publish(
-                f"homeassistant/sensor/cm1200_ds_channel_{i+1}_{col}/config",
-                json.dumps({
-                    "name": f"CM1200 DS Channel {i+1} {col.replace('_', ' ').title()}",
-                    "state_topic": f"{base_topic}/ds_channel/{i+1}/{col}",
-                    "unique_id": f"cm1200_ds_channel_{i+1}_{col}",
-                    "device": DEVICE_INFO,
-                    **({"unit_of_measurement": unit} if unit else {})
-                }),
-                retain=True
-            )
+        mqttc.publish(
+            f"homeassistant/sensor/cm1200_ds_channel_{i+1}/config",
+            json.dumps({
+                "name": f"CM1200 DS Channel {i+1}",
+                "state_topic": f"{base_topic}/ds_channel/{i+1}/state",
+                "json_attributes_topic": f"{base_topic}/ds_channel/{i+1}/attributes",
+                "unique_id": f"cm1200_ds_channel_{i+1}",
+                "device": DEVICE_INFO
+            }),
+            retain=True
+        )
 
-    # Upstream bonded channels (all columns)
+    # Upstream bonded channels (one entity per channel, all columns as attributes)
     for i in range(UPSTREAM_CHANNELS):
-        for col, unit in [
-            ("lock_status", None),
-            ("us_channel_type", None),
-            ("channel_id", None),
-            ("symbol_rate", "Ksym/sec"),
-            ("frequency", "Hz"),
-            ("power", "dBmV"),
-        ]:
-            mqttc.publish(
-                f"homeassistant/sensor/cm1200_us_channel_{i+1}_{col}/config",
-                json.dumps({
-                    "name": f"CM1200 US Channel {i+1} {col.replace('_', ' ').title()}",
-                    "state_topic": f"{base_topic}/us_channel/{i+1}/{col}",
-                    "unique_id": f"cm1200_us_channel_{i+1}_{col}",
-                    "device": DEVICE_INFO,
-                    **({"unit_of_measurement": unit} if unit else {})
-                }),
-                retain=True
-            )
+        mqttc.publish(
+            f"homeassistant/sensor/cm1200_us_channel_{i+1}/config",
+            json.dumps({
+                "name": f"CM1200 US Channel {i+1}",
+                "state_topic": f"{base_topic}/us_channel/{i+1}/state",
+                "json_attributes_topic": f"{base_topic}/us_channel/{i+1}/attributes",
+                "unique_id": f"cm1200_us_channel_{i+1}",
+                "device": DEVICE_INFO
+            }),
+            retain=True
+        )
 
-    # Downstream OFDM channels (all columns)
+    # Downstream OFDM channels (one entity per channel, all columns as attributes)
     for i in range(OFDM_CHANNELS):
-        for col, unit in [
-            ("lock_status", None),
-            ("modulation_profile_id", None),
-            ("channel_id", None),
-            ("frequency", "Hz"),
-            ("power", "dBmV"),
-            ("snr_mer", "dB"),
-            ("active_subcarrier_range", None),
-            ("unerrored_codewords", None),
-            ("correctable_codewords", None),
-            ("uncorrectable_codewords", None),
-        ]:
-            mqttc.publish(
-                f"homeassistant/sensor/cm1200_ofdm_channel_{i+1}_{col}/config",
-                json.dumps({
-                    "name": f"CM1200 OFDM Channel {i+1} {col.replace('_', ' ').title()}",
-                    "state_topic": f"{base_topic}/ofdm_channel/{i+1}/{col}",
-                    "unique_id": f"cm1200_ofdm_channel_{i+1}_{col}",
-                    "device": DEVICE_INFO,
-                    **({"unit_of_measurement": unit} if unit else {})
-                }),
-                retain=True
-            )
+        mqttc.publish(
+            f"homeassistant/sensor/cm1200_ofdm_channel_{i+1}/config",
+            json.dumps({
+                "name": f"CM1200 OFDM Channel {i+1}",
+                "state_topic": f"{base_topic}/ofdm_channel/{i+1}/state",
+                "json_attributes_topic": f"{base_topic}/ofdm_channel/{i+1}/attributes",
+                "unique_id": f"cm1200_ofdm_channel_{i+1}",
+                "device": DEVICE_INFO
+            }),
+            retain=True
+        )
 
-    # Upstream OFDMA channels (all columns)
+    # Upstream OFDMA channels (one entity per channel, all columns as attributes)
     for i in range(OFDMA_CHANNELS):
-        for col, unit in [
-            ("lock_status", None),
-            ("modulation_profile_id", None),
-            ("channel_id", None),
-            ("frequency", "Hz"),
-            ("power", "dBmV"),
-        ]:
-            mqttc.publish(
-                f"homeassistant/sensor/cm1200_ofdma_channel_{i+1}_{col}/config",
-                json.dumps({
-                    "name": f"CM1200 OFDMA Channel {i+1} {col.replace('_', ' ').title()}",
-                    "state_topic": f"{base_topic}/ofdma_channel/{i+1}/{col}",
-                    "unique_id": f"cm1200_ofdma_channel_{i+1}_{col}",
-                    "device": DEVICE_INFO,
-                    **({"unit_of_measurement": unit} if unit else {})
-                }),
-                retain=True
-            )
+        mqttc.publish(
+            f"homeassistant/sensor/cm1200_ofdma_channel_{i+1}/config",
+            json.dumps({
+                "name": f"CM1200 OFDMA Channel {i+1}",
+                "state_topic": f"{base_topic}/ofdma_channel/{i+1}/state",
+                "json_attributes_topic": f"{base_topic}/ofdma_channel/{i+1}/attributes",
+                "unique_id": f"cm1200_ofdma_channel_{i+1}",
+                "device": DEVICE_INFO
+            }),
+            retain=True
+        )
 
     # Modem Status Fields (unchanged)
     status_fields = [
@@ -165,6 +128,10 @@ def publish_discovery(mqttc, base_topic):
         retain=True
     )
 
+def clean_keys(entry):
+    """Convert all keys to lower case and spaces to underscores."""
+    return {k.lower().replace(" ", "_"): v for k, v in entry.items()}
+
 async def get_modem_data():
     data = {}
     async with async_playwright() as p:
@@ -175,9 +142,6 @@ async def get_modem_data():
         page = await context.new_page()
         try:
             await page.goto(MODEM_URL, wait_until="networkidle", timeout=30000)
-            # Uncomment to see what the headless browser is rendering:
-            # await page.screenshot(path="modem_debug.png")
-            # print("Screenshot taken: modem_debug.png")
             await page.wait_for_selector("#dsTable", timeout=30000)
 
             # Status fields
@@ -210,16 +174,6 @@ async def get_modem_data():
                 })
             data["downstream_channels_full"] = downstream_full
 
-            # For MQTT compatibility
-            ds_freq, ds_power, ds_snr = [], [], []
-            for d in downstream_full:
-                ds_freq.append(d["Frequency"].replace(" Hz","").strip())
-                ds_power.append(d["Power"].replace(" dBmV","").strip())
-                ds_snr.append(d["SNR"].replace(" dB","").strip())
-            data["ds_frequencies"] = ds_freq
-            data["ds_power"] = ds_power
-            data["ds_snr"] = ds_snr
-
             # --- Upstream bonded channels (full row dump) ---
             us_rows = await page.query_selector_all("#usTable tr")
             us_rows = us_rows[1:]
@@ -236,14 +190,6 @@ async def get_modem_data():
                     "Power": await cells[6].inner_text()
                 })
             data["upstream_channels_full"] = upstream_full
-
-            # For MQTT compatibility
-            us_freq, us_power = [], []
-            for u in upstream_full:
-                us_freq.append(u["Frequency"].replace(" Hz","").strip())
-                us_power.append(u["Power"].replace(" dBmV","").strip())
-            data["us_frequencies"] = us_freq
-            data["us_power"] = us_power
 
             # --- Downstream OFDM Channels (full row dump) ---
             ofdm_rows = await page.query_selector_all("#dsOfdmTable tr")
@@ -266,14 +212,6 @@ async def get_modem_data():
                 })
             data["ofdm_channels_full"] = ofdm_full
 
-            # For MQTT compatibility
-            ofdm_power, ofdm_snr = [], []
-            for o in ofdm_full:
-                ofdm_power.append(o["Power"].replace(" dBmV","").strip())
-                ofdm_snr.append(o["SNR / MER"].replace(" dB","").strip())
-            data["ofdm_power"] = ofdm_power
-            data["ofdm_snr"] = ofdm_snr
-
             # --- Upstream OFDMA Channels (full row dump) ---
             ofdma_rows = await page.query_selector_all("#usOfdmaTable tr")
             ofdma_rows = ofdma_rows[1:]
@@ -289,12 +227,6 @@ async def get_modem_data():
                     "Power": await cells[5].inner_text()
                 })
             data["ofdma_channels_full"] = ofdma_full
-
-            # For MQTT compatibility
-            ofdma_power = []
-            for o in ofdma_full:
-                ofdma_power.append(o["Power"].replace(" dBmV","").strip())
-            data["ofdma_power"] = ofdma_power
 
         except Exception as e:
             print(f"Scrape error: {e}")
@@ -316,79 +248,34 @@ async def main():
         if not data:
             print("No data scraped.")
         else:
-            # Downstream bonded channels (all fields)
+            # Downstream bonded channels (per channel, attributes)
             for idx, entry in enumerate(data.get("downstream_channels_full", [])):
-                for col, key in [
-                    ("lock_status", "Lock Status"),
-                    ("modulation", "Modulation"),
-                    ("channel_id", "Channel ID"),
-                    ("frequency", "Frequency"),
-                    ("power", "Power"),
-                    ("snr", "SNR"),
-                    ("correctables", "Correctables"),
-                    ("uncorrectables", "Uncorrectables"),
-                ]:
-                    topic = f"{MQTT_BASE_TOPIC}/ds_channel/{idx+1}/{col}"
-                    mqtt_publish(mqttc, topic, entry.get(key, ""))
+                state_topic = f"{MQTT_BASE_TOPIC}/ds_channel/{idx+1}/state"
+                attr_topic = f"{MQTT_BASE_TOPIC}/ds_channel/{idx+1}/attributes"
+                mqtt_publish(mqttc, state_topic, entry.get("Lock Status", ""))
+                mqtt_publish(mqttc, attr_topic, json.dumps(clean_keys(entry)))
 
-            # Upstream bonded channels (all fields)
+            # Upstream bonded channels (per channel, attributes)
             for idx, entry in enumerate(data.get("upstream_channels_full", [])):
-                for col, key in [
-                    ("lock_status", "Lock Status"),
-                    ("us_channel_type", "US Channel Type"),
-                    ("channel_id", "Channel ID"),
-                    ("symbol_rate", "Symbol Rate"),
-                    ("frequency", "Frequency"),
-                    ("power", "Power"),
-                ]:
-                    topic = f"{MQTT_BASE_TOPIC}/us_channel/{idx+1}/{col}"
-                    mqtt_publish(mqttc, topic, entry.get(key, ""))
+                state_topic = f"{MQTT_BASE_TOPIC}/us_channel/{idx+1}/state"
+                attr_topic = f"{MQTT_BASE_TOPIC}/us_channel/{idx+1}/attributes"
+                mqtt_publish(mqttc, state_topic, entry.get("Lock Status", ""))
+                mqtt_publish(mqttc, attr_topic, json.dumps(clean_keys(entry)))
 
-            # Downstream OFDM channels (all fields)
+            # Downstream OFDM channels (per channel, attributes)
             for idx, entry in enumerate(data.get("ofdm_channels_full", [])):
-                for col, key in [
-                    ("lock_status", "Lock Status"),
-                    ("modulation_profile_id", "Modulation / Profile ID"),
-                    ("channel_id", "Channel ID"),
-                    ("frequency", "Frequency"),
-                    ("power", "Power"),
-                    ("snr_mer", "SNR / MER"),
-                    ("active_subcarrier_range", "Active Subcarrier Number Range"),
-                    ("unerrored_codewords", "Unerrored Codewords"),
-                    ("correctable_codewords", "Correctable Codewords"),
-                    ("uncorrectable_codewords", "Uncorrectable Codewords"),
-                ]:
-                    topic = f"{MQTT_BASE_TOPIC}/ofdm_channel/{idx+1}/{col}"
-                    mqtt_publish(mqttc, topic, entry.get(key, ""))
+                state_topic = f"{MQTT_BASE_TOPIC}/ofdm_channel/{idx+1}/state"
+                attr_topic = f"{MQTT_BASE_TOPIC}/ofdm_channel/{idx+1}/attributes"
+                mqtt_publish(mqttc, state_topic, entry.get("Lock Status", ""))
+                mqtt_publish(mqttc, attr_topic, json.dumps(clean_keys(entry)))
 
-            # Upstream OFDMA channels (all fields)
+            # Upstream OFDMA channels (per channel, attributes)
             for idx, entry in enumerate(data.get("ofdma_channels_full", [])):
-                for col, key in [
-                    ("lock_status", "Lock Status"),
-                    ("modulation_profile_id", "Modulation / Profile ID"),
-                    ("channel_id", "Channel ID"),
-                    ("frequency", "Frequency"),
-                    ("power", "Power"),
-                ]:
-                    topic = f"{MQTT_BASE_TOPIC}/ofdma_channel/{idx+1}/{col}"
-                    mqtt_publish(mqttc, topic, entry.get(key, ""))
+                state_topic = f"{MQTT_BASE_TOPIC}/ofdma_channel/{idx+1}/state"
+                attr_topic = f"{MQTT_BASE_TOPIC}/ofdma_channel/{idx+1}/attributes"
+                mqtt_publish(mqttc, state_topic, entry.get("Lock Status", ""))
+                mqtt_publish(mqttc, attr_topic, json.dumps(clean_keys(entry)))
 
-            # Downstream per channel (legacy sensors)
-            for idx in range(DOWNSTREAM_CHANNELS):
-                mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/ds_power/channel_{idx+1}", data.get("ds_power", [None]*DOWNSTREAM_CHANNELS)[idx])
-                mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/ds_snr/channel_{idx+1}", data.get("ds_snr", [None]*DOWNSTREAM_CHANNELS)[idx])
-                mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/ds_frequencies/channel_{idx+1}", data.get("ds_frequencies", [None]*DOWNSTREAM_CHANNELS)[idx])
-            # Upstream per channel (legacy sensors)
-            for idx in range(UPSTREAM_CHANNELS):
-                mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/us_power/channel_{idx+1}", data.get("us_power", [None]*UPSTREAM_CHANNELS)[idx])
-                mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/us_frequencies/channel_{idx+1}", data.get("us_frequencies", [None]*UPSTREAM_CHANNELS)[idx])
-            # OFDM per channel (legacy sensors)
-            for idx in range(OFDM_CHANNELS):
-                mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/ofdm_power/channel_{idx+1}", data.get("ofdm_power", [None]*OFDM_CHANNELS)[idx])
-                mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/ofdm_snr/channel_{idx+1}", data.get("ofdm_snr", [None]*OFDM_CHANNELS)[idx])
-            # OFDMA per channel (legacy sensors)
-            for idx in range(OFDMA_CHANNELS):
-                mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/ofdma_power/channel_{idx+1}", data.get("ofdma_power", [None]*OFDMA_CHANNELS)[idx])
             # Status fields
             for key in ["downstream_channel_status", "downstream_channel_comment",
                         "connectivity_state", "connectivity_comment",
@@ -396,6 +283,7 @@ async def main():
                         "security_status", "security_comment",
                         "system_uptime"]:
                 mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/{key}", data.get(key, ""))
+
             # All stats as JSON
             mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/all", json.dumps(data))
             print("Published modem stats to MQTT.")
