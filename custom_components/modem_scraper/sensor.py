@@ -37,6 +37,23 @@ SINGLE_KEYS = [
     "system_uptime",
 ]
 
+# Units and attributes for each key
+SENSOR_ATTRIBUTES = {
+    "ds_frequencies": {"device_class": None, "unit_of_measurement": "Hz", "icon": "mdi:waves"},
+    "ds_power": {"device_class": None, "unit_of_measurement": "dBmV", "icon": "mdi:flash"},
+    "ds_snr": {"device_class": None, "unit_of_measurement": "dB", "icon": "mdi:signal"},
+    "us_frequencies": {"device_class": None, "unit_of_measurement": "Hz", "icon": "mdi:waves"},
+    "us_power": {"device_class": None, "unit_of_measurement": "dBmV", "icon": "mdi:flash"},
+    "ofdm_power": {"device_class": None, "unit_of_measurement": "dBmV", "icon": "mdi:flash"},
+    "ofdm_snr": {"device_class": None, "unit_of_measurement": "dB", "icon": "mdi:signal"},
+    "ofdma_power": {"device_class": None, "unit_of_measurement": "dBmV", "icon": "mdi:flash"},
+    "downstream_channel_status": {"device_class": None, "unit_of_measurement": None, "icon": "mdi:lan-connect"},
+    "connectivity_state": {"device_class": None, "unit_of_measurement": None, "icon": "mdi:lan"},
+    "boot_state": {"device_class": None, "unit_of_measurement": None, "icon": "mdi:power-cycle"},
+    "security_status": {"device_class": None, "unit_of_measurement": None, "icon": "mdi:shield-check"},
+    "system_uptime": {"device_class": None, "unit_of_measurement": None, "icon": "mdi:clock-outline"},
+}
+
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     url = config[CONF_URL]
     username = config.get(CONF_USERNAME)
@@ -67,11 +84,17 @@ class ModemScrapeSensor(SensorEntity):
         self.password = password
         self.key = key
         self._attr_state = None
+        self._attr_device_class = SENSOR_ATTRIBUTES.get(key, {}).get("device_class")
+        self._attr_unit_of_measurement = SENSOR_ATTRIBUTES.get(key, {}).get("unit_of_measurement")
+        self._attr_icon = SENSOR_ATTRIBUTES.get(key, {}).get("icon")
+        self._attr_extra_state_attributes = {}
 
     async def async_update(self):
         data = await async_get_modem_data(self.url, self.username, self.password)
         value = data.get(self.key)
         self._attr_state = value if value is not None else "unavailable"
+        # Add all modem data as attributes, excluding large lists
+        self._attr_extra_state_attributes = {k: v for k, v in data.items() if k not in LIST_KEYS}
 
 class ModemScrapeListSensor(SensorEntity):
     def __init__(self, key, url, username, password, idx):
@@ -82,6 +105,10 @@ class ModemScrapeListSensor(SensorEntity):
         self.key = key
         self.idx = idx
         self._attr_state = None
+        self._attr_device_class = SENSOR_ATTRIBUTES.get(key, {}).get("device_class")
+        self._attr_unit_of_measurement = SENSOR_ATTRIBUTES.get(key, {}).get("unit_of_measurement")
+        self._attr_icon = SENSOR_ATTRIBUTES.get(key, {}).get("icon")
+        self._attr_extra_state_attributes = {}
 
     async def async_update(self):
         data = await async_get_modem_data(self.url, self.username, self.password)
@@ -90,3 +117,10 @@ class ModemScrapeListSensor(SensorEntity):
             self._attr_state = values[self.idx]
         else:
             self._attr_state = "unavailable"
+        # Add all modem data as attributes, including the full list for this key
+        self._attr_extra_state_attributes = {
+            f"{self.key}_all": values,
+            "channel_index": self.idx + 1,
+            "total_channels": len(values),
+            **{k: v for k, v in data.items() if k not in LIST_KEYS}
+        }
