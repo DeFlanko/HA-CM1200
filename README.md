@@ -1,69 +1,110 @@
 # Netgear CM1200 MQTT Modem Scraper for Home Assistant
 
-This project lets you monitor your Netgear CM1200 cable modem in Home Assistant by scraping its status page using Playwright, then publishing results to your MQTT broker for easy integration.
+Monitor your Netgear CM1200 cable modem in Home Assistant—no custom component or YAML required!  
+This project uses a Python script to scrape your modem's status page and publish all stats (including channels, SNR, power, frequencies, OFDM/OFDMA, system status, and uptime) to your MQTT broker, with **full Home Assistant MQTT Discovery support**.
 
 ---
 
 ## Features
 
-- Scrapes all channel stats, SNR, power levels, frequencies, OFDM, OFDMA, and system uptime from your modem.
-- Publishes each channel/value as a separate MQTT topic.
+- **Full MQTT Discovery:** All sensors (including per-channel) are created automatically in Home Assistant—no YAML needed!
+- Scrapes downstream, upstream, OFDM, OFDMA, and summary/status fields from your modem.
 - Simple Python script—runs externally (PC, Raspberry Pi, server, etc).
-- Hassle-free Home Assistant OS/Container compatibility.
-- Provides a ready-to-use `configuration.yaml` for all channels and status fields.
+- 100% compatible with Home Assistant OS, Supervised, Container, and Core.
 
 ---
 
-## Quick Start
+## How It Works
 
-### 1. Prerequisites
+1. The Python script (run externally) logs into your modem and scrapes its status page.
+2. The script publishes sensor values and Home Assistant MQTT Discovery configs to your MQTT broker.
+3. Home Assistant (with MQTT integration enabled) **auto-creates all sensors** for you.
+4. You add the sensors to your dashboards and automations—no YAML or files in Home Assistant required!
 
-- You have a working MQTT broker (like Mosquitto) accessible to Home Assistant.
-- You can run Python scripts on a system with internet/LAN access to your modem.
+---
 
-### 2. Set Up the Scraper
+## Prerequisites
 
-#### a. Clone or download this repo.
+- A working MQTT broker (e.g., [Mosquitto](https://mosquitto.org/)) accessible to Home Assistant.
+- Python 3 on a machine that can reach your modem and the MQTT broker.
+- Home Assistant's [MQTT integration](https://www.home-assistant.io/integrations/mqtt/) enabled and configured.
 
-#### b. Install requirements:
+---
+
+## Setup Instructions
+
+### 1. Clone or Download This Repo
+
+### 2. Install Dependencies
+
+On your external system (not on Home Assistant OS):
+
 ```sh
 pip install playwright paho-mqtt
 playwright install chromium
 ```
 
-#### c. Edit `cm1200_mqtt_scraper.py`:
-- Set your MQTT and modem details at the top of the script.
+### 3. Edit the Script
 
-#### d. Run the script:
+Open `cm1200_mqtt_discovery_scraper.py` and set your:
+
+- MQTT broker address/credentials
+- Modem IP/credentials (if needed)
+- (Optional) Change channel counts if your modem's table is different
+
+### 4. Run the Script
+
 ```sh
-python3 cm1200_mqtt_scraper.py
+python3 cm1200_mqtt_discovery_scraper.py
 ```
 
-### 3. Add Sensors to Home Assistant
-
-**Copy the contents of [full_home_assistant_sensors.yaml](full_home_assistant_sensors.yaml) into your `configuration.yaml` or an `!include` file.**
-
-This configuration creates a sensor for each downstream and upstream channel, OFDM/OFDMA channels, and all summary/status fields as shown on the CM1200 modem status page.  
-*If your modem has a different number of channels, adjust the numbers accordingly.*
+Leave the script running (or set it as a service/cron job for reliability).
 
 ---
 
-## Example MQTT Topics
+## What Happens Next?
 
-- `homeassistant/cm1200/ds_power/channel_1`
-- `homeassistant/cm1200/ds_snr/channel_1`
-- `homeassistant/cm1200/us_power/channel_1`
-- `homeassistant/cm1200/ofdm_power/channel_1`
-- `homeassistant/cm1200/ofdma_power/channel_1`
-- `homeassistant/cm1200/system_uptime`
-- `homeassistant/cm1200/all` (full JSON blob)
+- The script scrapes your modem every 5 minutes (default, configurable).
+- It publishes all values and MQTT Discovery messages to your MQTT broker.
+- **Home Assistant will automatically create all sensors**—no need to edit `configuration.yaml`!
+- Find your sensors in Home Assistant under the device "CM1200 Cable Modem".
+
+---
+
+## Example Sensors Created
+
+- CM1200 Downstream Power Channel 1–32
+- CM1200 Downstream SNR Channel 1–32
+- CM1200 Downstream Frequency Channel 1–32
+- CM1200 Upstream Power Channel 1–8
+- CM1200 Upstream Frequency Channel 1–8
+- CM1200 OFDM Downstream Power/SNR Channel 1–2
+- CM1200 OFDMA Upstream Power Channel 1–2
+- CM1200 Downstream Channel Status
+- CM1200 Connectivity State
+- CM1200 Boot State
+- CM1200 Security Status
+- CM1200 System Uptime
+- CM1200 All Stats (JSON attributes, for advanced dashboards)
+
+If your modem has fewer/more channels, adjust the script configuration.
+
+---
+
+## Home Assistant Configuration
+
+**No YAML or custom files needed!**  
+Just make sure the MQTT integration is enabled and connected to your broker.
 
 ---
 
 ## Why External?
 
-Home Assistant OS does not allow installing custom Python packages or browsers.  
-This script runs anywhere you like and integrates perfectly via MQTT!
+Home Assistant OS and add-ons do **not** support installing Python packages or browsers securely.  
+By running this script on another machine, you get:
+- Maximum reliability and security
+- No risk to your Home Assistant instance
+- No manual YAML maintenance
 
 ---
 
@@ -73,9 +114,11 @@ This script runs anywhere you like and integrates perfectly via MQTT!
 
 ---
 
-## Full Example Sensor Configuration
+## Troubleshooting
 
-See [`full_home_assistant_sensors.yaml`](full_home_assistant_sensors.yaml) for a ready-to-use example that covers all channels and status fields.
+- If sensors don't appear, check that your script can reach your MQTT broker and that Home Assistant's MQTT integration is enabled.
+- Verify your modem's IP and credentials.
+- Check the script's output for errors.
 
 ---
 
@@ -84,3 +127,5 @@ See [`full_home_assistant_sensors.yaml`](full_home_assistant_sensors.yaml) for a
 - Inspired by [danieldotnl/ha-multiscrape](https://github.com/danieldotnl/ha-multiscrape)
 - Python scraping via [Playwright](https://playwright.dev/python/)
 - MQTT with [paho-mqtt](https://pypi.org/project/paho-mqtt/)
+
+---
