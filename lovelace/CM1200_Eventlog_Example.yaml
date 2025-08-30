@@ -1,0 +1,14 @@
+type: custom:flex-table-card
+title: CM1200 Event Log
+entities:
+  include: sensor.cm1200_cable_modem_cm1200_cable_modem_cm1200_event_log
+columns:
+  - data: log.time
+    name: Time
+  - data: log.priority
+    name: Priority
+  - data: log.description
+    name: Description
+max_rows: 50
+sort_by: time
+desc: true
