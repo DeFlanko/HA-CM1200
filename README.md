@@ -60,7 +60,6 @@ playwright install chromium
 
 ---
 
-
 ### 3. Edit the Script
 
 Open `cm1200_mqtt_discovery_scraper.py` and set your:
@@ -175,31 +174,28 @@ For each of the 2 channels:
 - ...and their comments
 
 ---
-
-## ⚠️Troubleshooting / Debugging
-
-- **Check `modem_debug.png`** after each run to see what Playwright sees.
-```python
-await page.goto(MODEM_URL, wait_until="networkidle", timeout=30000)
-# Uncomment to see what the headless browser is rendering:
-# await page.screenshot(path="modem_debug.png")
-# print("Screenshot taken: modem_debug.png")
-await page.wait_for_selector("#dsTable", timeout=30000)
-``` 
-- If sensors don't appear, check that your script can reach your MQTT broker and that Home Assistant's MQTT integration is enabled.
-  - you can also verify with [MQTT Explorer](https://mqtt-explorer.com/) 
-- Increase the `INTERVAL` (defaulted to 300 seconds "5 mins") if you don't need frequent scraping.
-
-
-- Verify your modem's IP and credentials.
-- Check the script's output for errors.
+> [!WARNING]
+> ## Troubleshooting / Debugging
+> 
+> - **Check `modem_debug.png`** after each run to see what Playwright sees.
+> ```python
+> await page.goto(MODEM_URL, wait_until="networkidle", timeout=30000)
+> # Uncomment to see what the headless browser is rendering:
+> # await page.screenshot(path="modem_debug.png")
+> # print("Screenshot taken: modem_debug.png")
+> await page.wait_for_selector("#dsTable", timeout=30000)
+> ``` 
+> - If sensors don't appear, check that your script can reach your MQTT broker and that Home Assistant's MQTT integration is enabled.
+>   - you can also verify with [MQTT Explorer](https://mqtt-explorer.com/) 
+> - Increase the `INTERVAL` (defaulted to 300 seconds "5 mins") if you don't need frequent scraping.
+> - Verify your modem's IP and credentials.
+> - Check the script's output for errors.
 
 ---
-
-## ❗Security Notice
-
-Your modem password and MQTT credentials are stored in plain text.  
-Restrict access to this script and the system running it.
+> [!CAUTION]
+> ## Security Notice
+> Your modem password and MQTT credentials are stored in plain text.  
+> Restrict access to this script and the system running it.
 
 ---
 
