@@ -1,45 +1,97 @@
-# Home Assistant Modem Scraper Integration
+# Netgear CM1200 MQTT Modem Scraper for Home Assistant
 
-This custom integration uses [Playwright](https://playwright.dev/python/) to scrape data from a JavaScript-rendered cable modem status page and exposes it as Home Assistant sensors.
+This project lets you monitor your Netgear CM1200 cable modem in Home Assistant by scraping its status page using Playwright, then publishing results to your MQTT broker for easy integration.
+
+---
 
 ## Features
 
-- Runs a headless Chromium browser to load and scrape modem data after JS is rendered.
-- Exposes sensors for desired modem status points.
-- Easy to extend with new selectors.
+- Scrapes all channel stats, SNR, power levels, and system uptime from your modem.
+- Publishes each channel/value as a separate MQTT topic.
+- Simple Python script—runs externally (PC, Raspberry Pi, server, etc).
+- Hassle-free Home Assistant OS/Container compatibility.
 
-## Installation
+---
 
-1. Copy the `custom_components/modem_scraper/` directory into your Home Assistant `custom_components/` folder.
-2. Install Playwright and browser binaries in your Home Assistant environment:
-    ```bash
-    pip install playwright
-    playwright install chromium
-    ```
-   (You may need to do this inside your Home Assistant container or virtualenv. For Home Assistant OS or Supervised, use a separate system and send results via MQTT or REST.)
-3. Restart Home Assistant.
+## Quick Start
 
-## Configuration
+### 1. Prerequisites
 
-Example in `configuration.yaml`:
-```yaml
-sensor:
-  - platform: modem_scraper
-    url: "http://192.168.100.1/DocsisStatus.htm"
-    username: "your_user"   # Optional, only if your modem requires login
-    password: "your_password"
-    scan_interval: 300      # Optional, seconds between scrapes
+- You have a working MQTT broker (like Mosquitto) accessible to Home Assistant.
+- You can run Python scripts on a system with internet/LAN access to your modem.
+
+### 2. Set Up the Scraper
+
+#### a. Clone or download this repo.
+
+#### b. Install requirements:
+```sh
+pip install playwright paho-mqtt
+playwright install chromium
 ```
 
-## Adding/Modifying Selectors
+#### c. Edit `cm1200_mqtt_scraper.py`:
+- Set your MQTT and modem details at the top of the script.
 
-Edit `playwright_scraper.py` to change what data is scraped and exposed.
+#### d. Run the script:
+```sh
+python3 cm1200_mqtt_scraper.py
+```
 
-## Troubleshooting
+### 3. Add Sensors to Home Assistant
 
-- If you see errors about missing Playwright or browser binaries, ensure step 2 above was completed successfully in your Python environment.
-- This integration is best for Home Assistant Core or Container installs. Home Assistant OS/Supervised users may need to run scraping on another system and push data in via MQTT.
+Add the following to your `configuration.yaml`:
 
-## License
+```yaml
+sensor:
+  - name: "CM1200 DS Power Channel 1"
+    state_topic: "homeassistant/cm1200/ds_power/channel_1"
+    unit_of_measurement: "dBmV"
+  - name: "CM1200 US Power Channel 1"
+    state_topic: "homeassistant/cm1200/us_power/channel_1"
+    unit_of_measurement: "dBmV"
+  - name: "CM1200 Downstream Channel Status"
+    state_topic: "homeassistant/cm1200/downstream_channel_status"
+  - name: "CM1200 System Uptime"
+    state_topic: "homeassistant/cm1200/system_uptime"
+  # ...repeat for all channels/sensors you want to expose...
+```
 
-MIT
+Or, to get all data in JSON:
+```yaml
+sensor:
+  - platform: mqtt
+    name: "CM1200 All Stats"
+    state_topic: "homeassistant/cm1200/all"
+    value_template: "{{ value_json.system_uptime }}"
+    json_attributes_topic: "homeassistant/cm1200/all"
+```
+
+---
+
+## Example MQTT Topics
+
+- `homeassistant/cm1200/ds_power/channel_1`
+- `homeassistant/cm1200/ds_snr/channel_1`
+- `homeassistant/cm1200/system_uptime`
+- `homeassistant/cm1200/all` (full JSON blob)
+
+---
+
+## Why External?
+
+Home Assistant OS does not allow installing custom Python packages or browsers. This script runs anywhere you like and integrates perfectly via MQTT!
+
+---
+
+## One-click Add MQTT Integration
+
+[![Open your Home Assistant instance and show the add integration dialog.](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=mqtt)
+
+---
+
+## Credits
+
+- Inspired by [danieldotnl/ha-multiscrape](https://github.com/danieldotnl/ha-multiscrape)
+- Python scraping via [Playwright](https://playwright.dev/python/)
+- MQTT with [paho-mqtt](https://pypi.org/project/paho-mqtt/)
