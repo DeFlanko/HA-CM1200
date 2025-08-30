@@ -6,10 +6,11 @@ This project lets you monitor your Netgear CM1200 cable modem in Home Assistant 
 
 ## Features
 
-- Scrapes all channel stats, SNR, power levels, and system uptime from your modem.
+- Scrapes all channel stats, SNR, power levels, frequencies, OFDM, OFDMA, and system uptime from your modem.
 - Publishes each channel/value as a separate MQTT topic.
 - Simple Python script—runs externally (PC, Raspberry Pi, server, etc).
 - Hassle-free Home Assistant OS/Container compatibility.
+- Provides a ready-to-use `configuration.yaml` for all channels and status fields.
 
 ---
 
@@ -40,32 +41,10 @@ python3 cm1200_mqtt_scraper.py
 
 ### 3. Add Sensors to Home Assistant
 
-Add the following to your `configuration.yaml`:
+**Copy the contents of [full_home_assistant_sensors.yaml](full_home_assistant_sensors.yaml) into your `configuration.yaml` or an `!include` file.**
 
-```yaml
-sensor:
-  - name: "CM1200 DS Power Channel 1"
-    state_topic: "homeassistant/cm1200/ds_power/channel_1"
-    unit_of_measurement: "dBmV"
-  - name: "CM1200 US Power Channel 1"
-    state_topic: "homeassistant/cm1200/us_power/channel_1"
-    unit_of_measurement: "dBmV"
-  - name: "CM1200 Downstream Channel Status"
-    state_topic: "homeassistant/cm1200/downstream_channel_status"
-  - name: "CM1200 System Uptime"
-    state_topic: "homeassistant/cm1200/system_uptime"
-  # ...repeat for all channels/sensors you want to expose...
-```
-
-Or, to get all data in JSON:
-```yaml
-sensor:
-  - platform: mqtt
-    name: "CM1200 All Stats"
-    state_topic: "homeassistant/cm1200/all"
-    value_template: "{{ value_json.system_uptime }}"
-    json_attributes_topic: "homeassistant/cm1200/all"
-```
+This configuration creates a sensor for each downstream and upstream channel, OFDM/OFDMA channels, and all summary/status fields as shown on the CM1200 modem status page.  
+*If your modem has a different number of channels, adjust the numbers accordingly.*
 
 ---
 
@@ -73,6 +52,9 @@ sensor:
 
 - `homeassistant/cm1200/ds_power/channel_1`
 - `homeassistant/cm1200/ds_snr/channel_1`
+- `homeassistant/cm1200/us_power/channel_1`
+- `homeassistant/cm1200/ofdm_power/channel_1`
+- `homeassistant/cm1200/ofdma_power/channel_1`
 - `homeassistant/cm1200/system_uptime`
 - `homeassistant/cm1200/all` (full JSON blob)
 
@@ -80,13 +62,20 @@ sensor:
 
 ## Why External?
 
-Home Assistant OS does not allow installing custom Python packages or browsers. This script runs anywhere you like and integrates perfectly via MQTT!
+Home Assistant OS does not allow installing custom Python packages or browsers.  
+This script runs anywhere you like and integrates perfectly via MQTT!
 
 ---
 
 ## One-click Add MQTT Integration
 
 [![Open your Home Assistant instance and show the add integration dialog.](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=mqtt)
+
+---
+
+## Full Example Sensor Configuration
+
+See [`full_home_assistant_sensors.yaml`](full_home_assistant_sensors.yaml) for a ready-to-use example that covers all channels and status fields.
 
 ---
 
