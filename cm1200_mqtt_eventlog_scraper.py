@@ -5,18 +5,20 @@ from paho.mqtt import client as mqtt_client
 from playwright.async_api import async_playwright
 
 # ============= USER CONFIGURATION =============
-MQTT_BROKER = "172.10.1.31"
+MQTT_BROKER = "<MQTT IP OR HOSTNAME>"
 MQTT_PORT = 1883
-MQTT_USER = "homeassistant"
-MQTT_PASS = "aic7Bai2aephe1oathai7siPhoo4uf0gah3ao5iurai4Eighuu9noonei2Pu8Ahj"
+MQTT_USER = "<MQTT USER>"
+MQTT_PASS = "<MQTT PASSWORD>"
 MQTT_BASE_TOPIC = "homeassistant/cm1200"
 
 MODEM_URL = "http://192.168.100.1/eventLog.htm"
 MODEM_USER = "admin"
-MODEM_PASS = "P00lp@rty!"
+MODEM_PASS = "<CABLE MODEM PASSWORD>"
 
 INTERVAL = 300  # Scrape interval (seconds)
 LAST_EVENTLOG_FILE = "last_eventlog_time.json"
+INTERVAL = 300  # Scrape interval (seconds)
+SENT_EVENTLOG_FILE = "sent_eventlog.json"
 # ==============================================
 
 DEVICE_INFO = {
@@ -33,35 +35,41 @@ def mqtt_publish(client, topic, value, retain=True):
     client.publish(topic, value, retain=retain)
 
 def publish_discovery(mqttc, base_topic):
-    # Discovery for event log sensor (full log as attributes, most recent entry as state)
+    # Discovery for the event log entity
     mqttc.publish(
-        f"homeassistant/sensor/cm1200_eventlog/config",
+        f"homeassistant/sensor/cm1200_eventlog_entry/config",
         json.dumps({
             "name": "CM1200 Event Log",
-            "state_topic": f"{base_topic}/eventlog",
-            "value_template": "{{ value_json.latest_entry }}",
-            "json_attributes_topic": f"{base_topic}/eventlog",
-            "unique_id": "cm1200_eventlog",
-            "device": DEVICE_INFO,
-        }),
-        retain=True
-    )
-    # Discovery for "new entries" sensor (state is count, attribute is new entries)
-    mqttc.publish(
-        f"homeassistant/sensor/cm1200_eventlog_new/config",
-        json.dumps({
-            "name": "CM1200 Event Log New Entries",
-            "state_topic": f"{base_topic}/eventlog_new",
-            "value_template": "{{ value_json.new_count }}",
-            "json_attributes_topic": f"{base_topic}/eventlog_new",
-            "unique_id": "cm1200_eventlog_new",
+            "unique_id": "cm1200_eventlog_entry",
+            "state_topic": f"{base_topic}/eventlog_entry/state",
+            "json_attributes_topic": f"{base_topic}/eventlog_entry/attributes",
             "device": DEVICE_INFO,
         }),
         retain=True
     )
 
+def event_hash(time, priority, description):
+    s = f"{time}|{priority}|{description}"
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+def load_sent_events():
+    if os.path.exists(SENT_EVENTLOG_FILE):
+        try:
+            with open(SENT_EVENTLOG_FILE, "r") as f:
+                return set(json.load(f))
+        except Exception:
+            return set()
+    return set()
+
+def save_sent_events(sent_hashes):
+    try:
+        with open(SENT_EVENTLOG_FILE, "w") as f:
+            json.dump(list(sent_hashes), f)
+    except Exception as e:
+        print(f"Could not save sent event log hashes: {e}")
+
 async def get_modem_eventlog():
-    data = {}
+    entries = []
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
@@ -70,12 +78,8 @@ async def get_modem_eventlog():
         page = await context.new_page()
         try:
             await page.goto(MODEM_URL, wait_until="networkidle", timeout=30000)
-            await page.screenshot(path="modem_eventlog_debug.png")
-            print("Screenshot taken: modem_eventlog_debug.png")
             await page.wait_for_selector("#EventLogTable", timeout=30000)
-
             log_rows = await page.query_selector_all("#EventLogTable tr")
-            log_entries = []
             for row in log_rows[1:]:  # skip header
                 cells = await row.query_selector_all("td")
                 if len(cells) < 3:
@@ -83,39 +87,16 @@ async def get_modem_eventlog():
                 time_val = (await cells[0].inner_text()).strip()
                 priority = (await cells[1].inner_text()).strip()
                 description = (await cells[2].inner_text()).strip()
-                log_entries.append({
+                entries.append({
                     "time": time_val,
                     "priority": priority,
                     "description": description
                 })
-            data["entries"] = log_entries
-            if log_entries:
-                latest = log_entries[0]
-                data["latest_entry"] = f"{latest['time']} {latest['priority']} {latest['description']}"
-            else:
-                data["latest_entry"] = ""
         except Exception as e:
             print(f"Scrape error: {e}")
         finally:
             await browser.close()
-    return data
-
-def load_last_sent_time():
-    # Returns the last sent log entry time, or None if not found
-    if os.path.exists(LAST_EVENTLOG_FILE):
-        try:
-            with open(LAST_EVENTLOG_FILE, "r") as f:
-                return json.load(f).get("last_time")
-        except Exception:
-            return None
-    return None
-
-def save_last_sent_time(last_time):
-    try:
-        with open(LAST_EVENTLOG_FILE, "w") as f:
-            json.dump({"last_time": last_time}, f)
-    except Exception as e:
-        print(f"Could not save last event log time: {e}")
+    return entries
 
 async def main():
     mqttc = mqtt_client.Client()
@@ -126,39 +107,34 @@ async def main():
 
     publish_discovery(mqttc, MQTT_BASE_TOPIC)
 
-    last_time = load_last_sent_time()
+    sent_hashes = load_sent_events()
 
     while True:
-        data = await get_modem_eventlog()
-        entries = data.get("entries", [])
-        # Publish full log (for HA attribute use)
-        mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/eventlog", json.dumps(data))
-        print("Published complete modem event log to MQTT.")
-
-        # Only publish new entries since last_time
-        new_entries = []
+        entries = await get_modem_eventlog()
+        # Newest to oldest so newest is always the state
+        new_events = []
         for entry in entries:
-            if last_time and entry["time"] == last_time:
-                break  # Stop at last sent entry
-            new_entries.append(entry)
-        if new_entries:
-            # Send new entries (oldest first for easier reading)
-            to_send = list(reversed(new_entries))
-            mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/eventlog_new", json.dumps({
-                "new_entries": to_send,
-                "new_count": len(to_send)
-            }))
-            print(f"Published {len(to_send)} new modem event log entries to MQTT.")
-            # Update last_time
-            last_time = entries[0]["time"]  # Top of the table is always most recent
-            save_last_sent_time(last_time)
-        else:
-            # Still publish empty so HA can clear state
-            mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/eventlog_new", json.dumps({
-                "new_entries": [],
-                "new_count": 0
-            }))
-            print("No new log entries.")
+            h = event_hash(entry["time"], entry["priority"], entry["description"])
+            if h not in sent_hashes:
+                new_events.append((h, entry))
+        # Always publish the full log as an attribute
+        full_log_payload = {
+            "log": entries
+        }
+        mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/eventlog_entry/attributes", json.dumps(full_log_payload))
+        # Send each new event (oldest first for logical ordering)
+        for h, entry in reversed(new_events):
+            # Publish state (hash) and latest attributes (the entry is the latest, but log is always in attributes)
+            mqtt_publish(mqttc, f"{MQTT_BASE_TOPIC}/eventlog_entry/state", h)
+            print(f"Published event: {entry}")
+            sent_hashes.add(h)
+            save_sent_events(sent_hashes)  # Save after each to persist on crash
+        if not new_events:
+            print("No new event log entries.")
+        await asyncio.sleep(INTERVAL)
+
+if __name__ == "__main__":
+    asyncio.run(main())
         await asyncio.sleep(INTERVAL)
 
 if __name__ == "__main__":
