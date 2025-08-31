@@ -183,7 +183,9 @@ Leave the scripts running (or use a service/cron for reliability).
 
 By [DeFlanko](https://github.com/DeFlanko).
 
-- Inspired by [danieldotnl/ha-multiscrape](https://github.com/danieldotnl/ha-multiscrape)
+- Inspired by:
+  - [mmiller7/Netgear_modem_scrape](https://github.com/mmiller7/Netgear_modem_scrape)  
+  - [danieldotnl/ha-multiscrape](https://github.com/danieldotnl/ha-multiscrape)
 - Python scraping via [Playwright](https://playwright.dev/python/)
 - MQTT with [paho-mqtt](https://pypi.org/project/paho-mqtt/)
 
