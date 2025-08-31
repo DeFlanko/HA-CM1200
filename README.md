@@ -85,9 +85,9 @@ MODEM_PASS = "your_modem_password"
 INTERVAL = 300  # Scrape interval in seconds
 ```
 
-#### **Edit `cm1200_mqtt_eventlog_scraper.py` for the Event Log**
+#### **Edit `cm1200_mqtt_event_log_scraper.py` for the Event Log**
 
-Open `cm1200_mqtt_eventlog_scraper.py` and set your:
+Open `cm1200_mqtt_event_log_scraper.py` and set your:
 
 ```python
 MQTT_BROKER = "your.mqtt.server"
@@ -108,7 +108,7 @@ INTERVAL = 300  # Scrape interval in seconds
 
 ```sh
 python cm1200_mqtt_discovery_scraper.py
-python cm1200_mqtt_eventlog_scraper.py
+python cm1200_mqtt_event_log_scraper.py
 ```
 
 Leave the scripts running (or use a service/cron for reliability).
@@ -141,7 +141,7 @@ Leave the scripts running (or use a service/cron for reliability).
 - **All Stats Sensor:**  
   - `sensor.cm1200_all_stats` — includes all tables as attributes (see script for details).
 
-### Event Log (`cm1200_mqtt_eventlog_scraper.py`)
+### Event Log (`cm1200_mqtt_event_log_scraper.py`)
 
 - **Event Log Sensor:**  
   - `sensor.cm1200_eventlog_entry`
