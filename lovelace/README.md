@@ -1,3 +1,7 @@
+The below YAML's will get you to see all the data in one page. 
+
+<img width="100%"  alt="image" src="https://github.com/user-attachments/assets/d032de99-dd8c-40c4-ab4c-33e4fb322f4b" />
+
 ## Event Log
 ```yaml
 type: custom:flex-table-card
@@ -16,7 +20,6 @@ sort_by: time
 desc: true
 
 ```
-
 
 ## Starup Procedure
 
