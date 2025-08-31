@@ -1,6 +1,7 @@
 The below YAML's will get you to see all the data in one page. 
 
-<img width="100%"  alt="image" src="https://github.com/user-attachments/assets/d032de99-dd8c-40c4-ab4c-33e4fb322f4b" />
+<img width="100%" alt="image" src="https://github.com/user-attachments/assets/9bf46e96-8544-40a8-a9c6-8f3c10c7fa17" />
+
 
 ## Event Log
 ```yaml
@@ -13,12 +14,17 @@ columns:
     name: Time
   - data: log.priority
     name: Priority
+    modify: >-
+          ( x == 1  || x == "Warning (5)" ? '<div style="color:orange;">' + x + '</div>' :"" 
+          || x == "Notice (6)" ? '<div style="color:cornflowerblue;">' + x + '</div>' :"" 
+          || x == "Critical (3)" ? '<div style="color:red;">' + x + '</div>' :""  
+          || x == "Error (4)" ? '<div style="color:purple;">' + x + '</div>' :""
+          )
   - data: log.description
     name: Description
 max_rows: 50
 sort_by: time
 desc: true
-
 ```
 
 ## Starup Procedure
